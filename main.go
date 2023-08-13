@@ -29,8 +29,9 @@ func main() {
 
 	addr := env("ADDRESS", ":1323")
 	db := env("DB", "data.sqlite3")
+	baseUrl := env("BASE_URL", "http://localhost:1323/")
 
-	handler, err := NewHandler(db)
+	handler, err := NewHandler(db, baseUrl)
 	should(e, err)
 
 	e.Renderer, err = renderer.Template(e, assets.FS, "views")
@@ -46,6 +47,7 @@ func main() {
 	e.GET("/", handler.HandleGetPosts)
 	e.POST("/posts", handler.HandleCreatePost)
 	e.GET("/posts/:id", handler.HandleGetSinglePost)
+	e.GET("/posts.xml", handler.HandleGetRssFeed)
 
 	should(e, e.Start(addr))
 }

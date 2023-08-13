@@ -7,6 +7,7 @@ require github.com/mattn/go-sqlite3 v1.14.17
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
+	github.com/gorilla/feeds v1.1.1
 	github.com/labstack/echo/v4 v4.11.1 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
