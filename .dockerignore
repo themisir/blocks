@@ -9,3 +9,6 @@ Makefile
 *.db-journal
 *.sqlite3
 *.sqlite3-journal
+Dockerfile
+.dockerignore
+.gitignore

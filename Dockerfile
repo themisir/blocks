@@ -1,7 +1,8 @@
 ##
 ## BUILD
 ##
-FROM golang:1.21 AS build
+FROM golang:1.21-alpine AS build
+RUN apk add --update --no-cache gcc musl-dev
 
 WORKDIR /build
 
@@ -10,19 +11,18 @@ COPY go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=1 go build -o /blocks .
+RUN CGO_ENABLED=1 go build -o app .
 
 ##
 ## DEPLOY
 ##
-FROM gcr.io/distroless/static:latest AS deploy
+FROM alpine:latest AS deploy
 
 WORKDIR /
 
-COPY --from=build /blocks /blocks
+COPY --from=build /build/app /app
 
 ENV ADDRESS=":80"
-USER nonroot:nonroot
 EXPOSE 80
 
-CMD ["/blocks"]
+CMD ["/app"]
