@@ -14,8 +14,11 @@ type Handler struct {
 	db *sql.DB
 }
 
-func NewHandler() (*Handler, error) {
-	db, err := sql.Open("sqlite3", "data.sqlite3")
+func NewHandler(dbPath string) (*Handler, error) {
+	if dbPath == "" {
+		dbPath = "data.sqlite3"
+	}
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %e", err)
 	}

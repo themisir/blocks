@@ -17,15 +17,20 @@ func should(e *echo.Echo, err error) {
 	}
 }
 
+func env(name string, fallback string) string {
+	if value, ok := os.LookupEnv(name); ok {
+		return value
+	}
+	return fallback
+}
+
 func main() {
 	e := echo.New()
 
-	addr, addrSet := os.LookupEnv("ADDRESS")
-	if !addrSet {
-		addr = ":1323"
-	}
+	addr := env("ADDRESS", ":1323")
+	db := env("DB", "data.sqlite3")
 
-	handler, err := NewHandler()
+	handler, err := NewHandler(db)
 	should(e, err)
 
 	e.Renderer, err = renderer.Template(e, assets.FS, "views")
