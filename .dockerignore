@@ -1,0 +1,11 @@
+/.vscode/
+/.idea/
+/bin/
+/data/
+.env
+deploy.sh
+Makefile
+*.db
+*.db-journal
+*.sqlite3
+*.sqlite3-journal
