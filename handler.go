@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -66,7 +67,7 @@ func (self *Handler) HandleGetSinglePost(c echo.Context) error {
 
 func (self *Handler) HandleCreatePost(c echo.Context) error {
 	bodyContent := c.FormValue("content")
-	bodyAuthor := c.FormValue("author")
+	bodyAuthor := strings.TrimSpace(c.FormValue("author"))
 
 	if len(bodyAuthor) > 32 {
 		bodyAuthor = bodyAuthor[:32]
@@ -117,11 +118,18 @@ func (self *Handler) HandleGetRssFeed(c echo.Context) error {
 			description = description[:256] + "..."
 		}
 
+		author := post.Author
+		if author == "" {
+			author = "@anonymous"
+		} else {
+			author = fmt.Sprintf("@%s", author)
+		}
+
 		feed.Items[i] = &feeds.Item{
-			Title:       fmt.Sprintf("Post by %s", post.Author),
+			Title:       fmt.Sprintf("Block by %s", author),
 			Link:        &feeds.Link{Href: self.PageUrl(fmt.Sprintf("/posts/%v", post.Id))},
 			Description: description,
-			Author:      &feeds.Author{Name: post.Author},
+			Author:      &feeds.Author{Name: author},
 			Created:     post.CreatedAt,
 			Content:     post.Content.Html,
 		}
