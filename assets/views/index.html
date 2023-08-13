@@ -44,20 +44,19 @@
 </head>
 
 <body>
+  {{ if .EnablePosting }}
   <header>
     <nav>
       <h1><a href="/">Blocks</a></h1>
       <a id="name-anchor" class="btn" href="#" title="Click to change your pen name">@anonymous</a>
     </nav>
 
-    {{ if .EnablePosting }}
     <form method="POST" action="/posts">
       <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
 
       <input type="hidden" name="author" value="" />
       <button type="submit">Post</button>
     </form>
-    {{ end }}
   </header>
 
   <script>
@@ -80,6 +79,13 @@
 
     updateName(window.localStorage.getItem(nameStorageKey));
   </script>
+  {{ else }}
+  <header>
+    <nav>
+      <h1><a href="/">Blocks</a></h1>
+    </nav>
+  </header>
+  {{ end }}
 
   <main>
     {{ range .Posts }}
