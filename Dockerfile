@@ -10,7 +10,7 @@ COPY go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o /blocks .
+RUN CGO_ENABLED=1 go build -o /blocks .
 
 ##
 ## DEPLOY
