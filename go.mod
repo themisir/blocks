@@ -2,13 +2,23 @@ module github.com/themisir/blocks
 
 go 1.19
 
-require github.com/mattn/go-sqlite3 v1.14.17
+require (
+	github.com/golang-migrate/migrate/v4 v4.16.2
+	github.com/mattn/go-sqlite3 v1.14.17
+)
+
+require (
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+)
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/gorilla/feeds v1.1.1
-	github.com/labstack/echo/v4 v4.11.1 // indirect
+	github.com/labstack/echo/v4 v4.11.1
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

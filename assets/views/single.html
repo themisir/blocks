@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blocks</title>
+  <link rel="stylesheet" href="/water.css" />
+  <link rel="stylesheet" href="/custom.css" />
+  <link rel="alternate" href="/posts.xml" type="application/rss+xml" />
+
+  <style>
+
+  </style>
+</head>
+
+<body>
+  {{ template "partials/header.html" $ }}
+
+  <main>
+    {{ template "partials/post.html" .Post }}
+  </main>
+</body>
+
+</html>

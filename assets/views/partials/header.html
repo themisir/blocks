@@ -1,0 +1,14 @@
+
+<header>
+    <nav>
+        <h1><a href="/">Blocks</a></h1>
+        <a class="btn" href="/me">@anonymous</a>
+    </nav>
+
+    {{ if .EnablePosting }}
+    <form method="POST" action="/posts">
+        <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
+        <button type="submit">Post</button>
+    </form>
+    {{ end }}
+</header>

@@ -1,0 +1,23 @@
+<div class="post">
+    <div class="post-content">
+        {{ .Content.Html }}
+    </div>
+
+    <p class="post-meta">
+        <small>- {{ .Author }} on {{ .CreatedAt.Format "02 Jan, 06 at 15:04" }}</small>
+        <a class="btn" href="/posts/{{ .Id }}">[reply]</a>
+        <a class="btn" href="/posts/{{ .Id }}">[link]</a>
+    </p>
+
+    <div class="post-footer">
+        {{ if .CanBeDeleted }}
+        <form method="post" action="/posts/{{ .Id }}/delete"></form>
+        {{ end }}
+    </div>
+
+    {{ if gt (len .Children) 0 }}
+    <blockquote>
+        {{ range .Children }}{{ template "partials/post.html" . }}{{ end }}
+    </blockquote>
+    {{ end }}
+</div>

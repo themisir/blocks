@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blocks</title>
+  <link rel="stylesheet" href="/water.css" />
+  <link rel="stylesheet" href="/custom.css" />
+  <link rel="alternate" href="/posts.xml" type="application/rss+xml" />
+
+  <style>
+
+  </style>
+</head>
+
+<body>
+  {{ template "partials/header.html" $ }}
+
+  <main>
+    {{ range .Posts }}
+    <article>
+      <hr />
+      {{ .Content.Html }}
+      <p class="post-meta">
+        <small>- {{ .Author }} on {{ .CreatedAt.Format "02 Jan, 06 at 15:04" }}</small>
+        <small>
+          <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
+        </small>
+      </p>
+    </article>
+    {{ end }}
+  </main>
+</body>
+
+</html>

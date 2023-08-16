@@ -46,7 +46,10 @@ func main() {
 
 	e.GET("/", handler.HandleGetPosts)
 	e.POST("/posts", handler.HandleCreatePost)
+	e.POST("/posts/:id/replies", handler.HandleCreatePost)
 	e.GET("/posts/:id", handler.HandleGetSinglePost)
+	e.POST("/posts/:id/delete", handler.HandleDeletePost)
+
 	e.GET("/posts.xml", handler.HandleGetRssFeed)
 
 	should(e, e.Start(addr))
