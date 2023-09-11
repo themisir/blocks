@@ -78,10 +78,7 @@ func (h *Handler) HandleCreatePost(c echo.Context) error {
 		return fmt.Errorf("failed to compile content: %e", err)
 	}
 
-	_, err = InsertPost(h.db, Post{
-		Content: content,
-		Author:  username,
-	})
+	_, err = InsertPost(h.db, content, username, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create post: %e", err)
 	}
