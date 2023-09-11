@@ -19,6 +19,7 @@ const (
 type User interface {
 	IsAdmin() bool
 	Username() string
+	GetClaim(name string) string
 }
 
 type user struct {
@@ -59,6 +60,10 @@ func (u *user) Username() string {
 	return u.getClaim("name")
 }
 
+func (u *user) GetClaim(name string) string {
+	return u.getClaim(name)
+}
+
 type anonymous struct{}
 
 func (d *anonymous) IsAdmin() bool {
@@ -67,6 +72,10 @@ func (d *anonymous) IsAdmin() bool {
 
 func (d *anonymous) Username() string {
 	return "anonymous"
+}
+
+func (d *anonymous) GetClaim(string) string {
+	return ""
 }
 
 func AnonymousAccess() echo.MiddlewareFunc {

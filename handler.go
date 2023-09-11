@@ -3,10 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
-
-	"github.com/labstack/echo/v4"
 )
 
 type Handler struct {
@@ -34,6 +33,8 @@ func (h *Handler) HandleGetPosts(c echo.Context) error {
 
 	user := GetUser(c)
 
+	TzProfileFor(c).AdjustPosts(posts)
+
 	return c.Render(http.StatusOK, "index.html", echo.Map{
 		"Posts":         posts,
 		"EnablePosting": true,
@@ -58,6 +59,8 @@ func (h *Handler) HandleGetSinglePost(c echo.Context) error {
 	}
 
 	user := GetUser(c)
+
+	TzProfileFor(c).AdjustPosts(children).AdjustPost(&post)
 
 	return c.Render(http.StatusOK, "index.html", echo.Map{
 		"Children":      children,
