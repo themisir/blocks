@@ -17,6 +17,7 @@ RUN CGO_ENABLED=1 go build -o app .
 ## DEPLOY
 ##
 FROM alpine:latest AS deploy
+RUN apk add --update --no-cache tzdata
 
 WORKDIR /
 
