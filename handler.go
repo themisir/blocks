@@ -96,7 +96,7 @@ func (h *Handler) HandleCreatePost(c echo.Context) error {
 		return fmt.Errorf("failed to compile content: %w", err)
 	}
 
-	createdPostId, err := InsertPost(h.db, content, username, parentPostId)
+	createdPostId, err := InsertPost(h.db, content, username, parentPostId, c.FormValue("post_anon") == "on")
 	if err != nil {
 		return fmt.Errorf("failed to create post: %w", err)
 	}

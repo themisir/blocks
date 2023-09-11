@@ -17,7 +17,10 @@
     {{ if .EnablePosting }}
     <form class="form-post" method="POST" action="/posts">
         <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
-        <button type="submit">Post</button>
+        <div class="form-footer">
+            <button type="submit">Post</button>
+            <label><input name="post_anon" type="checkbox" /> Anonymous</label>
+        </div>
     </form>
     {{ end }}
 </header>
@@ -52,7 +55,10 @@
 
     <form class="form-reply" method="POST" action="/posts/{{ .Id }}/replies">
         <textarea name="content" placeholder="Add your reply..." rows="3" minlength="8" required></textarea>
-        <button type="submit">Post</button>
+        <div class="form-footer">
+            <button type="submit">Respond</button>
+            <label><input name="post_anon" type="checkbox" /> Anonymous</label>
+        </div>
     </form>
 
     {{ else }}

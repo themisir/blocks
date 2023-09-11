@@ -150,8 +150,13 @@ ORDER BY c.id`, parentPostId)
 	return result, nil
 }
 
-func InsertPost(db *sql.DB, content Content, username string, parentPostId *int64) (int64, error) {
-	res, err := db.Exec(`INSERT INTO posts (content_markdown, content_html, author, parent_id) VALUES ($1, $2, $3, $4)`, content.Markdown, content.Html, username, parentPostId)
+func InsertPost(db *sql.DB, content Content, username string, parentPostId *int64, anonymous bool) (int64, error) {
+	var usernamePtr *string
+	if !anonymous {
+		usernamePtr = &username
+	}
+
+	res, err := db.Exec(`INSERT INTO posts (content_markdown, content_html, author, parent_id) VALUES ($1, $2, $3, $4)`, content.Markdown, content.Html, usernamePtr, parentPostId)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a row: %w", err)
 	}
