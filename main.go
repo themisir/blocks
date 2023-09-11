@@ -30,6 +30,7 @@ func main() {
 	addr := env("ADDRESS", ":1323")
 	db := env("DB", "data.sqlite3")
 	baseUrl := env("BASE_URL", "http://localhost:1323/")
+	jwksUrl := env("JWKS_URL", "")
 
 	handler, err := NewHandler(db, baseUrl)
 	should(e, err)
@@ -44,10 +45,15 @@ func main() {
 		Root:       "static",
 	}))
 
+	if jwksUrl == "" {
+		e.Use(AnonymousAccess())
+	} else {
+		e.Use(Authorize(jwksUrl))
+	}
+
 	e.GET("/", handler.HandleGetPosts)
 	e.POST("/posts", handler.HandleCreatePost)
 	e.GET("/posts/:id", handler.HandleGetSinglePost)
-	e.GET("/posts.xml", handler.HandleGetRssFeed)
 
 	should(e, e.Start(addr))
 }
