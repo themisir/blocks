@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	_ "github.com/mattn/go-sqlite3"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -19,14 +18,9 @@ func NewHandler(dbPath string, baseUrl string) (*Handler, error) {
 	if dbPath == "" {
 		dbPath = "data.sqlite3"
 	}
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := CreateMigratedDb(dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %e", err)
-	}
-
-	err = MigrateDb(db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to migrate database: %e", err)
+		return nil, err
 	}
 
 	return &Handler{db, baseUrl}, nil

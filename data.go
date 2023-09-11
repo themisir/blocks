@@ -14,14 +14,6 @@ type Post struct {
 	CreatedAt time.Time
 }
 
-//go:embed schema.sql
-var schemaSql string
-
-func MigrateDb(db *sql.DB) error {
-	_, err := db.Exec(schemaSql)
-	return err
-}
-
 func QuerySinglePost(db *sql.DB, id int) (post Post, err error) {
 	row := db.QueryRow(`SELECT id, content_markdown, content_html, author, created_at FROM posts WHERE deleted_at IS NULL AND id = $1`, id)
 	err = row.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.Author, &post.CreatedAt)
