@@ -1,49 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blocks</title>
-  <link rel="stylesheet" href="/water.css" />
-  <link rel="stylesheet" href="/custom.css" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Blocks</title>
+    <link rel="stylesheet" href="/water.css"/>
+    <link rel="stylesheet" href="/custom.css"/>
 </head>
-
 <body>
-  {{ if .EnablePosting }}
-  <header>
+<header>
     <nav>
-      <h1><a href="/">Blocks</a></h1>
-      {{ with .User }}<span>@{{ .Username }}</span>{{ else }}<span>@anonymous</span>{{ end }}
+        <h1><a href="/">Blocks</a></h1>
+        {{ with .User }}<span>@{{ .Username }}</span>{{ else }}<span>anonymous</span>{{ end }}
     </nav>
 
-    <form method="POST" action="/posts">
-      <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
-      <button type="submit">Post</button>
+    {{ if .EnablePosting }}
+    <form class="form-post" method="POST" action="/posts">
+        <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
+        <button type="submit">Post</button>
     </form>
-  </header>
-  {{ else }}
-  <header>
-    <nav>
-      <h1><a href="/">Blocks</a></h1>
-    </nav>
-  </header>
-  {{ end }}
-
-  <main>
-    {{ range .Posts }}
-    <article>
-      {{ if gt (len $.Posts) 1 }}<hr />{{ end }}
-      {{ .Content.Html }}
-      <p class="post-footer">
-        <small>- {{ with .Author }}{{ . }}{{ else }}anonymous{{ end }} on {{ .CreatedAt.Format "02 Jan, 06 at 15:04" }}</small>
-        <small>
-          <a class="btn" href="/posts/{{ .Id }}">[link]</a>
-        </small>
-      </p>
-    </article>
     {{ end }}
-  </main>
-</body>
+</header>
 
+<main>
+    {{ with .Post }}
+    <div class="post">
+        {{ template "partials/post-content.html" . }}
+
+        <div class="post-footer">
+            {{ template "partials/post-footer-info.html" . }}
+            <div class="post-footer-actions">
+                <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
+                {{ if or ($.User.IsAdmin) (eq $.User.Username .Author) -}}
+                <a class="btn" href="/posts/{{ .Id }}/delete">[delete]</a>
+                {{- end }}
+            </div>
+        </div>
+    </div>
+
+    {{ with $.Children }}
+    <h3>Replies</h3>
+    <div class="post-replies">
+        {{ range . }}
+        <div class="post" id="reply-{{ .Id }}">
+            {{ template "partials/post-content.html" . }}
+            {{ template "partials/post-footer.html" . }}
+        </div>
+        {{ end }}
+    </div>
+    {{ end }}
+
+    <form class="form-reply" method="POST" action="/posts/{{ .Id }}/replies">
+        <textarea name="content" placeholder="Add your reply..." rows="3" minlength="8" required></textarea>
+        <button type="submit">Post</button>
+    </form>
+
+    {{ else }}
+    {{ range .Posts }}
+    <div class="post">
+        {{ template "partials/post-content.html" . }}
+        {{ template "partials/post-footer.html" . }}
+    </div>
+    {{ end }}
+    {{ end }}
+</main>
+</body>
 </html>

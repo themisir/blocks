@@ -20,14 +20,38 @@ a {
     color: var(--text-main);
 }
 
-a.btn {
+.btn {
     color: var(--text-main);
     font-family: monospace;
     opacity: .8;
+}
+
+.post {
+    margin-bottom: 1.2rem;
+    border-radius: 8px;
+    padding: .5rem .6rem;
+    background: #9e9e9e0d;
+}
+
+.post-content {
+    padding: .2rem 0;
 }
 
 .post-footer {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    font-size: .7rem;
+    margin-top: .4rem;
+    opacity: .7;
+}
+
+.post-parent {
+    padding: .2rem 0 .2rem .6rem;
+    border-left: 4px solid var(--focus);
+    margin-bottom: .2rem;
+}
+
+.post-parent-footer {
+    font-size: .7rem;
 }

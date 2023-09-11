@@ -1,0 +1,6 @@
+<div class="post-footer">
+    {{ template "partials/post-footer-info.html" . }}
+    <div class="post-footer-actions">
+        <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
+    </div>
+</div>

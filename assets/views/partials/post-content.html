@@ -1,0 +1,9 @@
+{{ $thisPost := . }}
+{{ with .Parent }}
+<div class="post-parent">
+    <div class="post-content">{{ SafeHtml .Content.Html }}</div>
+    <a class="post-parent-footer" href="/posts/{{ .Id }}#reply-{{ $thisPost.Id }}">{{ AuthorDisplay . }}</a>
+</div>
+{{ end }}
+
+<div class="post-content">{{ SafeHtml .Content.Html }}</div>

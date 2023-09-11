@@ -16,22 +16,22 @@ var migrations embed.FS
 func CreateMigratedDb(dbPath string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %e", err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize migration driver: %e", err)
+		return nil, fmt.Errorf("failed to initialize migration driver: %w", err)
 	}
 
 	source, err := iofs.New(migrations, "migrations")
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize migration source: %e", err)
+		return nil, fmt.Errorf("failed to initialize migration source: %w", err)
 	}
 
 	m, err := migrate.NewWithInstance("iofs", source, "postgres", driver)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize migrations: %e", err)
+		return nil, fmt.Errorf("failed to initialize migrations: %w", err)
 	}
 
 	if err := m.Up(); err != nil {

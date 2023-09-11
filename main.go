@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
 	"os"
 
@@ -34,7 +35,12 @@ func main() {
 	handler, err := NewHandler(db, baseUrl)
 	should(e, err)
 
-	e.Renderer, err = renderer.Template(e, assets.FS, "views")
+	e.Renderer, err = renderer.Template(e, assets.FS, "views", template.FuncMap{
+		"AuthorDisplay": AuthorDisplay,
+		"SafeHtml": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	})
 	should(e, err)
 
 	e.Pre(middleware.RemoveTrailingSlash())
@@ -51,8 +57,11 @@ func main() {
 	}
 
 	e.GET("/", handler.HandleGetPosts)
-	e.POST("/posts", handler.HandleCreatePost)
 	e.GET("/posts/:id", handler.HandleGetSinglePost)
+
+	e.POST("/posts", handler.HandleCreatePost)
+	e.POST("/posts/:id/replies", handler.HandleCreatePost)
+	e.POST("/posts/:id/delete", handler.HandleDeletePost)
 
 	should(e, e.Start(addr))
 }

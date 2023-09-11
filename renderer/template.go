@@ -2,15 +2,20 @@ package renderer
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
-	"text/template"
 
 	"github.com/labstack/echo/v4"
 )
 
-func Template(e *echo.Echo, fsys fs.FS, root string) (echo.Renderer, error) {
-	var tmpl *template.Template
+type TemplateRenderer interface {
+	echo.Renderer
+}
+
+func Template(e *echo.Echo, fsys fs.FS, root string, funcMap template.FuncMap) (TemplateRenderer, error) {
+	templates := template.New("_empty")
+	templates.Funcs(funcMap)
 
 	if err := fs.WalkDir(fsys, root, func(path string, d fs.DirEntry, err error) error {
 		if d.Type().IsRegular() {
@@ -24,15 +29,15 @@ func Template(e *echo.Echo, fsys fs.FS, root string) (echo.Renderer, error) {
 			// Read file contents
 			bytes, err := fs.ReadFile(fsys, path)
 			if err != nil {
-				return fmt.Errorf("failed to read file '%s': %e", path, err)
+				return fmt.Errorf("failed to read file '%s': %w", path, err)
 			}
 
 			e.Logger.Infof("Compiled template: '%s' -> '%s'", path, name)
 
-			if tmpl == nil {
-				tmpl = template.Must(template.New(name).Parse(string(bytes)))
+			if templates == nil {
+				templates = template.Must(template.New(name).Parse(string(bytes)))
 			} else {
-				tmpl = template.Must(tmpl.New(name).Parse(string(bytes)))
+				templates = template.Must(templates.New(name).Parse(string(bytes)))
 			}
 		}
 
@@ -41,7 +46,7 @@ func Template(e *echo.Echo, fsys fs.FS, root string) (echo.Renderer, error) {
 		return nil, err
 	}
 
-	return &templateRenderer{tmpl}, nil
+	return &templateRenderer{templates}, nil
 }
 
 // templateRenderer is a custom html/template renderer for Echo framework
