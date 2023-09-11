@@ -67,7 +67,7 @@ type CreatePostRequest struct {
 	RedirectToPostId int    `json:"redirectToPostId" form:"redirectToPostId" query:"redirectToPostId"`
 }
 
-func (h *Handler) createPost(req *CreatePostRequest) (id int, err error) {
+func (h *Handler) createPost(req *CreatePostRequest, user User) (id int, err error) {
 	// compile and validate content
 	req.Content = strings.TrimSpace(req.Content)
 	if len(req.Content) < 8 {
@@ -81,12 +81,10 @@ func (h *Handler) createPost(req *CreatePostRequest) (id int, err error) {
 		return 0, echo.ErrBadRequest
 	}
 
-	userId := 0
-
 	return InsertPost(h.db, CreatePost{
 		Content:      content,
 		IsAnonymous:  req.IsAnonymous,
-		UserId:       userId,
+		Author:       user.Username(),
 		ParentPostId: req.ID,
 	})
 }
@@ -101,9 +99,12 @@ func (h *Handler) HandleDeletePost(c echo.Context) error {
 		return err
 	}
 
-	userId := 0
+	user := GetUser(c)
+	if user == nil {
+		return echo.ErrUnauthorized
+	}
 
-	if err := DeletePost(h.db, req.ID, userId); err != nil {
+	if err := DeletePost(h.db, req.ID, user.Username()); err != nil {
 		return c.String(http.StatusTeapot, "Imma be a teapot for ya?")
 	}
 
@@ -121,7 +122,12 @@ func (h *Handler) HandleCreatePost(c echo.Context) error {
 		return err
 	}
 
-	_, err := h.createPost(req)
+	user := GetUser(c)
+	if user == nil {
+		return echo.ErrUnauthorized
+	}
+
+	_, err := h.createPost(req, user)
 	if err != nil {
 		return err
 	}
@@ -161,7 +167,7 @@ func (h *Handler) HandleGetRssFeed(c echo.Context) error {
 			description = description[:256] + "..."
 		}
 
-		author := post.User.Username
+		author := post.Author
 		if post.IsAnonymous {
 			author = "@anonymous"
 		} else {
@@ -181,48 +187,4 @@ func (h *Handler) HandleGetRssFeed(c echo.Context) error {
 	c.Response().Header().Add(echo.HeaderContentType, "application/rss+xml; charset=utf-8")
 	c.Response().WriteHeader(http.StatusOK)
 	return feed.WriteRss(c.Response())
-}
-
-func (h *Handler) HandleGetLogin(c echo.Context) error {
-	return c.Render(http.StatusOK, "login.html", echo.Map{})
-}
-
-func (h *Handler) HandlePostLogin(c echo.Context) error {
-	type LoginRequest struct {
-		Username string `form:"username" json:"username"`
-		Password string `form:"username" json:"password"`
-	}
-
-	req := new(LoginRequest)
-	if err := c.Bind(req); err != nil {
-		return err
-	}
-
-	user, err := TryLogin(h.db, req.Username, req.Password)
-	if err != nil {
-		return c.Render(http.StatusOK, "login.html", echo.Map{
-			"Error": "Invalid username or password",
-		})
-	}
-
-	sessionId, err := CreateUserSession(h.db, user.ID, c.Request().UserAgent(), c.Request().RemoteAddr)
-	if err != nil {
-		c.Logger().Errorf("unable to create session: %s", err)
-		return echo.ErrInternalServerError
-	}
-
-	cookieTtl := 30 * 24 * time.Hour
-
-	c.SetCookie(&http.Cookie{
-		Name:     "_session",
-		Value:    sessionId,
-		Path:     "/",
-		Expires:  time.Now().Add(cookieTtl),
-		MaxAge:   int(cookieTtl.Seconds()),
-		Secure:   false,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	return c.Redirect(http.StatusSeeOther, "/")
 }

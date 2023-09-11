@@ -1,89 +1,125 @@
 package main
 
 import (
-	"crypto/rand"
-	"database/sql"
-	"encoding/base64"
-	"errors"
+	"context"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/MicahParks/keyfunc"
 )
 
 const (
-	RoleUser  = "user"
 	RoleAdmin = "admin"
 )
 
-type User struct {
-	ID           int       `json:"id"`
-	Username     string    `json:"username"`
-	PasswordHash string    `json:"passwordHash"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
+type User interface {
+	IsAdmin() bool
+	Username() string
 }
 
-func (u User) IsAdmin() bool {
-	return u.Role == RoleAdmin
+type user struct {
+	claims jwt.MapClaims
 }
 
-func CreateUser(db *sql.DB, username string, password, role string) (int, error) {
-	username = strings.TrimSpace(username)
-	if len(username) < 1 || len(username) > 64 {
-		return 0, errors.New("username either too long or too short")
+func GetUser(c echo.Context) User {
+	user := c.Get("user")
+	if user, ok := user.(User); ok {
+		return user
+	}
+	return nil
+}
+
+func (u *user) getClaim(claimName string) string {
+	if s, ok := u.claims[claimName]; ok {
+		switch s := s.(type) {
+		case string:
+			return s
+		case []string:
+			if len(s) > 0 {
+				return s[0]
+			}
+		case []interface{}:
+			if len(s) > 0 {
+				return fmt.Sprintf("%v", s[0])
+			}
+		}
+	}
+	return ""
+}
+
+func (u *user) IsAdmin() bool {
+	return u.getClaim("blocks:role") == RoleAdmin
+}
+
+func (u *user) Username() string {
+	return u.getClaim("name")
+}
+
+type debugUser struct{}
+
+func (d *debugUser) IsAdmin() bool {
+	return false
+}
+
+func (d *debugUser) Username() string {
+	return "__dev"
+}
+
+func DebugAuthMiddleware() echo.MiddlewareFunc {
+	user := &debugUser{}
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("user", user)
+			return next(c)
+		}
+	}
+}
+
+func AuthMiddleware(jwksUri string) echo.MiddlewareFunc {
+	options := keyfunc.Options{
+		Ctx: context.Background(),
+		RefreshErrorHandler: func(err error) {
+			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
+		},
+		RefreshInterval:   5 * time.Minute,
+		RefreshRateLimit:  10 * time.Second,
+		RefreshTimeout:    10 * time.Second,
+		RefreshUnknownKID: true,
 	}
 
-	normalizedUsername := strings.ToUpper(username)
-	passwordHash := hashPassword(password)
-
-	res, err := db.Exec(`INSERT INTO users (username, normalized_username, password_hash, role) VALUES ($1, $2, $3, $4)`, username, normalizedUsername, passwordHash, role)
+	jwks, err := keyfunc.Get(jwksUri, options)
 	if err != nil {
-		return 0, err
+		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
 	}
 
-	return id32(res)
-}
+	const bearerPrefix = "bearer "
 
-func CreateUserSession(db *sql.DB, userId int, userAgent, ipAddress string) (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("unable to generate session token: %e", err)
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			headerValue := c.Request().Header.Get("authorization")
+			if headerValue == "" || !strings.HasPrefix(strings.ToLower(headerValue), bearerPrefix) {
+				return echo.ErrUnauthorized
+			}
+
+			jwtB64 := headerValue[len(bearerPrefix):]
+
+			var claims jwt.MapClaims
+			token, err := jwt.ParseWithClaims(jwtB64, claims, jwks.Keyfunc)
+			if err != nil {
+				return err
+			}
+
+			if !token.Valid {
+				return echo.ErrUnauthorized
+			}
+
+			c.Set("user", &user{claims})
+			return next(c)
+		}
 	}
-	sessionId := base64.URLEncoding.EncodeToString(b)
-	_, err := db.Exec(`INSERT INTO user_sessions (session_id, user_id, user_agent, ip_address) VALUES ($1, $2, $3, $4)`, sessionId, userId, userAgent, ipAddress)
-	return sessionId, err
-}
-
-func FindUser(db *sql.DB, username string) (user User, err error) {
-	username = strings.ToUpper(strings.TrimSpace(username))
-	err = db.QueryRow(`SELECT id, username, password_hash, role, created_at  FROM users WHERE normalized_username = $1`, username).
-		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Role, &user.CreatedAt)
-	return
-}
-
-func TryLogin(db *sql.DB, username, password string) (User, error) {
-	user, err := FindUser(db, username)
-	if err != nil {
-		return User{}, err
-	}
-
-	if comparePasswordHash(user.PasswordHash, password) {
-		return user, nil
-	} else {
-		return User{}, errors.New("invalid password")
-	}
-}
-
-func hashPassword(pwd string) string {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(bytes)
-}
-
-func comparePasswordHash(hash, pwd string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pwd)) == nil
 }

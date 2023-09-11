@@ -11,7 +11,7 @@ type Post struct {
 	Id           int
 	Content      Content
 	IsAnonymous  bool
-	User         UserRef
+	Author       string
 	Depth        int
 	ParentPostId int
 	CreatedAt    time.Time
@@ -19,36 +19,16 @@ type Post struct {
 	ReplyCount   int
 }
 
-func (p Post) CanBeDeleted() bool {
-	delta := time.Now().Sub(p.CreatedAt)
-	return delta < 3*time.Minute
-}
-
-func (p Post) Author() string {
-	if p.IsAnonymous {
-		return "anonymous"
-	} else {
-		return p.User.Username
-	}
-}
-
-type UserRef struct {
-	Id       int
-	Username string
-}
-
 func QuerySinglePost(db *sql.DB, id int) (*Post, error) {
 	rows, err := db.Query(`SELECT p.id,
        p.content_markdown,
        p.content_html,
        p.is_anonymous,
-       coalesce(p.user_id, 0) as user_id,
-       coalesce(u.username, '') as username,
+       coalesce(p.author, '') as author,
        p.depth,
        coalesce(p.parent_post_id, 0) as parent_post_id,
        p.created_at
 FROM posts p
-         LEFT JOIN main.users u on u.id = p.user_id
 WHERE (p.id = $1 OR p.top_level_post_id = $1)
   AND p.deleted_at IS NULL
 ORDER BY p.depth ASC, p.id DESC`, id)
@@ -62,7 +42,7 @@ ORDER BY p.depth ASC, p.id DESC`, id)
 
 	for rows.Next() {
 		post := new(Post)
-		err = rows.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.IsAnonymous, &post.User.Id, &post.User.Username, &post.Depth, &post.ParentPostId, &post.CreatedAt)
+		err = rows.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.IsAnonymous, &post.Author, &post.Depth, &post.ParentPostId, &post.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -86,14 +66,12 @@ func QueryPosts(db *sql.DB) ([]Post, error) {
        p.content_markdown,
        p.content_html,
        p.is_anonymous,
-       coalesce(p.user_id, 0) as user_id,
-       coalesce(u.username, '') as username,
+       coalesce(p.author, '') as author,
        p.depth,
        coalesce(p.parent_post_id, 0) as parent_post_id,
        p.created_at,
        (SELECT count(*) FROM posts c WHERE c.top_level_post_id = p.id AND c.deleted_at IS NULL) as reply_count
 FROM posts p
-         LEFT JOIN main.users u on u.id = p.user_id
 WHERE p.depth = 0
   AND p.deleted_at IS NULL
 ORDER BY p.id DESC`)
@@ -105,7 +83,7 @@ ORDER BY p.id DESC`)
 	var result []Post
 	for rows.Next() {
 		var post Post
-		err := rows.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.IsAnonymous, &post.User.Id, &post.User.Username, &post.Depth, &post.ParentPostId, &post.CreatedAt, &post.ReplyCount)
+		err := rows.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.IsAnonymous, &post.Author, &post.Depth, &post.ParentPostId, &post.CreatedAt, &post.ReplyCount)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read a row: %e", err)
 		}
@@ -119,7 +97,7 @@ ORDER BY p.id DESC`)
 type CreatePost struct {
 	Content      Content
 	IsAnonymous  bool
-	UserId       int
+	Author       string
 	ParentPostId int
 }
 
@@ -138,9 +116,9 @@ func InsertPost(db *sql.DB, post CreatePost) (int, error) {
 			topLevelPostId = parentPostId
 		}
 
-		res, err = db.Exec(`INSERT INTO posts (content_markdown, content_html, is_anonymous, user_id, depth, top_level_post_id, parent_post_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`, post.Content.Markdown, post.Content.Html, post.IsAnonymous, post.UserId, parentDepth+1, topLevelPostId, parentPostId)
+		res, err = db.Exec(`INSERT INTO posts (content_markdown, content_html, is_anonymous, author, depth, top_level_post_id, parent_post_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`, post.Content.Markdown, post.Content.Html, post.IsAnonymous, post.Author, parentDepth+1, topLevelPostId, parentPostId)
 	} else {
-		res, err = db.Exec(`INSERT INTO posts (content_markdown, content_html, is_anonymous, user_id, depth, top_level_post_id, parent_post_id) VALUES ($1, $2, $3, $4, 0, NULL, NULL)`, post.Content.Markdown, post.Content.Html, post.IsAnonymous, post.UserId)
+		res, err = db.Exec(`INSERT INTO posts (content_markdown, content_html, is_anonymous, author, depth, top_level_post_id, parent_post_id) VALUES ($1, $2, $3, $4, 0, NULL, NULL)`, post.Content.Markdown, post.Content.Html, post.IsAnonymous, post.Author)
 	}
 
 	if err != nil {
@@ -149,8 +127,8 @@ func InsertPost(db *sql.DB, post CreatePost) (int, error) {
 	return id32(res)
 }
 
-func DeletePost(db *sql.DB, id int64, userId int) error {
-	_, err := db.Exec(`DELETE FROM posts WHERE id = $1 AND user_id = $2 AND (UNIXEPOCH('now') - UNIXEPOCH(created_at)) < 180`, id, userId)
+func DeletePost(db *sql.DB, id int64, username string) error {
+	_, err := db.Exec(`DELETE FROM posts WHERE id = $1 AND author = $2 AND (UNIXEPOCH('now') - UNIXEPOCH(created_at)) < 180`, id, username)
 	return err
 }
 

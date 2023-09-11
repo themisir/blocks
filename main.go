@@ -30,6 +30,7 @@ func main() {
 	addr := env("ADDRESS", ":1323")
 	db := env("DB", "data.sqlite3")
 	baseUrl := env("BASE_URL", "http://localhost:1323/")
+	jwksUrl := env("JWKS_URL", "")
 
 	handler, err := NewHandler(db, baseUrl)
 	should(e, err)
@@ -43,6 +44,12 @@ func main() {
 		Filesystem: http.FS(assets.FS),
 		Root:       "static",
 	}))
+
+	if jwksUrl == "" {
+		e.Use(DebugAuthMiddleware())
+	} else {
+		e.Use(AuthMiddleware(jwksUrl))
+	}
 
 	e.GET("/", handler.HandleGetPosts)
 	e.POST("/posts", handler.HandleCreatePost)

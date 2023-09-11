@@ -7,14 +7,25 @@
   <title>Blocks</title>
   <link rel="stylesheet" href="/water.css" />
   <link rel="stylesheet" href="/custom.css" />
-  <link rel="alternate" href="/posts.xml" type="application/rss+xml" />
 </head>
 
 <body>
   {{ template "partials/header.html" $ }}
 
   <main>
-    {{ template "partials/post.html" .Post }}
+    <form method="post">
+      <div>
+        <label for="username">Username</label>
+        <input id="username" name="username" />
+      </div>
+
+      <div>
+        <label for="password">Password</label>
+        <input id="password" name="passowrd" type="password" />
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
   </main>
 </body>
 
