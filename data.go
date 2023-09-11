@@ -94,33 +94,6 @@ ORDER BY c.id DESC`)
 	if err != nil {
 		return nil, err
 	}
-	return readPosts(rows)
-}
-
-func QueryChildrenPosts(db *sql.DB, parentPostId int64) ([]Post, error) {
-	rows, err := db.Query(`SELECT c.id,
-       c.content_markdown,
-       c.content_html,
-       coalesce(c.author, ''),
-       c.children_count,
-       c.created_at,
-       (c.parent_id IS NOT NULL AND p.deleted_at IS NULL) as has_parent,
-       coalesce(p.id, 0),
-       coalesce(p.content_markdown, ''),
-       coalesce(p.content_html, ''),
-       coalesce(p.author, '')
-FROM posts c
-         LEFT JOIN posts p ON p.id = c.parent_id AND p.deleted_at IS NULL
-WHERE c.deleted_at IS NULL AND c.parent_id = $1
-ORDER BY c.id`, parentPostId)
-
-	if err != nil {
-		return nil, err
-	}
-	return readPosts(rows)
-}
-
-func readPosts(rows *sql.Rows) ([]Post, error) {
 	defer rows.Close()
 
 	var result []Post
@@ -137,6 +110,38 @@ func readPosts(rows *sql.Rows) ([]Post, error) {
 
 		if hasParent {
 			post.Parent = &parent
+		}
+
+		result = append(result, post)
+	}
+
+	return result, nil
+}
+
+func QueryChildrenPosts(db *sql.DB, parentPostId int64) ([]Post, error) {
+	rows, err := db.Query(`SELECT c.id,
+       c.content_markdown,
+       c.content_html,
+       coalesce(c.author, ''),
+       c.children_count,
+       c.created_at
+FROM posts c
+         LEFT JOIN posts p ON p.id = c.parent_id AND p.deleted_at IS NULL
+WHERE c.deleted_at IS NULL AND c.parent_id = $1
+ORDER BY c.id`, parentPostId)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []Post
+	for rows.Next() {
+		var post Post
+
+		err := rows.Scan(&post.Id, &post.Content.Markdown, &post.Content.Html, &post.Author, &post.ReplyCount, &post.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read a row: %w", err)
 		}
 
 		result = append(result, post)
