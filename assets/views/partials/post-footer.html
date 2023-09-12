@@ -1,6 +1,8 @@
 <div class="post-footer">
     {{ template "partials/post-footer-info.html" . }}
     <div class="post-footer-actions">
-        <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
+        <a class="btn" href="/posts/{{ .Id }}">
+            [{{ if gt .ReplyCount 0 }}{{ .ReplyCount }} replies{{ else }}reply{{ end }}]
+        </a>
     </div>
 </div>

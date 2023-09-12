@@ -33,7 +33,6 @@
         <div class="post-footer">
             {{ template "partials/post-footer-info.html" . }}
             <div class="post-footer-actions">
-                <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
                 {{ if or ($.User.IsAdmin) (eq $.User.Username .Author) -}}
                 <a class="btn" href="/posts/{{ .Id }}/delete" data-delete-btn>[delete]</a>
                 {{- end }}
