@@ -19,7 +19,7 @@
         <textarea name="content" placeholder="What's on your mind..." rows="3" minlength="8" required></textarea>
         <div class="form-footer">
             <button type="submit">Post</button>
-            <label><input name="post_anon" type="checkbox" /> Anonymous</label>
+            <label><input name="post_anon" type="checkbox"/> Anonymous</label>
         </div>
     </form>
     {{ end }}
@@ -35,7 +35,7 @@
             <div class="post-footer-actions">
                 <a class="btn" href="/posts/{{ .Id }}">[{{ .ReplyCount }} replies]</a>
                 {{ if or ($.User.IsAdmin) (eq $.User.Username .Author) -}}
-                <a class="btn" href="/posts/{{ .Id }}/delete">[delete]</a>
+                <a class="btn" href="/posts/{{ .Id }}/delete" data-delete-btn>[delete]</a>
                 {{- end }}
             </div>
         </div>
@@ -57,7 +57,7 @@
         <textarea name="content" placeholder="Add your reply..." rows="3" minlength="8" required></textarea>
         <div class="form-footer">
             <button type="submit">Respond</button>
-            <label><input name="post_anon" type="checkbox" /> Anonymous</label>
+            <label><input name="post_anon" type="checkbox"/> Anonymous</label>
         </div>
     </form>
 
@@ -70,5 +70,21 @@
     {{ end }}
     {{ end }}
 </main>
+
+<script>
+    document.querySelectorAll('a[data-delete-btn]').forEach(function (el) {
+        el.addEventListener('click', function (ev) {
+            ev.preventDefault();
+
+            if (!confirm('Are you sure?')) return;
+
+            const form = document.body.appendChild(document.createElement('form'));
+
+            form.action = el.href;
+            form.method = 'post';
+            form.submit();
+        });
+    });
+</script>
 </body>
 </html>
