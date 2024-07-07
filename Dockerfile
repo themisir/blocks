@@ -1,8 +1,8 @@
 ##
 ## BUILD
 ##
-FROM golang:1.21 AS build
-RUN apt-get install -y gcc build-essentials
+FROM golang:1.21-bookworm AS build
+RUN apt-get install -y build-essential
 
 WORKDIR /build
 
