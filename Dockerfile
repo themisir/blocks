@@ -1,8 +1,8 @@
 ##
 ## BUILD
 ##
-FROM golang:1.21-alpine AS build
-RUN apk add --update --no-cache gcc musl-dev
+FROM golang:1.21 AS build
+RUN apt-get install -y gcc build-essentials
 
 WORKDIR /build
 
