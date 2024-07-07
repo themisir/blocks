@@ -1,8 +1,7 @@
 ##
 ## BUILD
 ##
-FROM golang:1.21-alpine AS build
-RUN apk add --update --no-cache gcc musl-dev
+FROM golang:1.21-bookworm AS build
 
 WORKDIR /build
 
