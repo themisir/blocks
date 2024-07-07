@@ -2,7 +2,7 @@
 ## BUILD
 ##
 FROM golang:1.21-bookworm AS build
-RUN apt-get install -y build-essential
+RUN aptget install -y gcc
 
 WORKDIR /build
 
